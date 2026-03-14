@@ -4,11 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>GTD — ניהול משימות</title>
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0c0c0f">
-<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -140,6 +135,10 @@ html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:
 .proj-card:hover{border-color:var(--accent);transform:translateY(-2px)}
 .proj-card:active{transform:scale(0.98)}
 .proj-card-stripe{position:absolute;top:0;right:0;width:4px;height:100%}
+.proj-dates{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;margin-bottom:4px}
+.proj-date-tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:rgba(90,90,114,0.18);color:var(--text-muted)}
+.proj-date-tag.proj-date-over{background:rgba(214,48,49,0.15);color:#d63031}
+.proj-date-tag.proj-date-soon{background:rgba(253,203,110,0.15);color:#fdcb6e}
 .proj-card-name{font-size:15px;font-weight:700;margin-bottom:4px}
 .proj-card-desc{font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.5}
 .proj-progress-bar{height:4px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px}
@@ -149,6 +148,29 @@ html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:
 .add-proj-card:hover{border-color:var(--accent);color:var(--accent)}
 
 /* REVIEW */
+.stats-wrap{padding:16px;max-width:600px;margin:0 auto}
+.stats-kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.stats-kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+.stats-kpi-icon{font-size:22px;margin-bottom:4px}
+.stats-kpi-val{font-size:28px;font-weight:800;line-height:1.1}
+.stats-kpi-label{font-size:11px;color:var(--text-muted);margin-top:4px;font-weight:600}
+.stats-section-title{font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:1.2px;text-transform:uppercase;margin:20px 0 10px}
+.stats-chart{display:flex;align-items:flex-end;gap:6px;height:120px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 10px 0}
+.stats-bar-col{display:flex;flex-direction:column;align-items:center;flex:1;height:100%}
+.stats-bar-val{font-size:10px;color:var(--text-muted);font-weight:600;margin-bottom:3px;min-height:14px}
+.stats-bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end;margin-bottom:4px}
+.stats-bar-fill{width:100%;border-radius:4px 4px 0 0;background:var(--surface3);min-height:3px;transition:height 0.3s}
+.stats-bar-fill.today{background:var(--accent)}
+.stats-bar-label{font-size:10px;color:var(--text-muted);padding-bottom:6px}
+.stats-bar-label.today{color:var(--accent);font-weight:700}
+.stats-proj-list{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.stats-proj-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)}
+.stats-proj-row:last-child{border-bottom:none}
+.stats-proj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.stats-proj-name{font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stats-proj-bar-wrap{width:80px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;flex-shrink:0}
+.stats-proj-bar-fill{height:100%;border-radius:3px;transition:width 0.4s}
+.stats-proj-pct{font-size:11px;color:var(--text-muted);font-weight:700;min-width:28px;text-align:left}
 .review-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
 .review-section-title{font-size:14px;font-weight:700;margin-bottom:10px}
 .review-step{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--text-dim);user-select:none}
@@ -325,6 +347,7 @@ html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:
       <div class="nav-section">
         <div class="nav-item" data-view="projects"><span class="nav-icon">📁</span><span>כל הפרויקטים</span></div>
         <div class="nav-item" data-view="review"><span class="nav-icon">🔄</span><span>סקירה שבועית</span></div>
+        <div class="nav-item" data-view="stats"><span class="nav-icon">📊</span><span>סטטיסטיקות</span></div>
       </div>
       <div class="sync-indicator" id="sync-indicator">
         <div class="sync-dot none" id="sync-dot"></div>
@@ -359,7 +382,7 @@ html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:
       <button class="bnav-item" data-view="next"><span class="bnav-icon">✅</span><span>הבאות</span><span class="bnav-count" id="b-next"></span></button>
       <button class="bnav-item" data-view="today"><span class="bnav-icon">📅</span><span>היום</span><span class="bnav-count" id="b-today"></span></button>
       <button class="bnav-item" data-view="projects"><span class="bnav-icon">📁</span><span>פרויקטים</span></button>
-      <button class="bnav-item" data-view="review"><span class="bnav-icon">🔄</span><span>סקירה</span></button>
+      <button class="bnav-item" data-view="stats"><span class="bnav-icon">📊</span><span>סטטיסטיקות</span></button>
     </div>
   </nav>
 </div>
@@ -411,6 +434,10 @@ html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:
     <div class="modal-title">פרויקט חדש</div>
     <div class="form-group"><label class="form-label">שם הפרויקט *</label><input type="text" class="form-input" id="pf-name" placeholder="שם הפרויקט"></div>
     <div class="form-group"><label class="form-label">תיאור</label><textarea class="form-textarea" id="pf-desc" placeholder="מטרת הפרויקט..." style="min-height:60px"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">תאריך התחלה</label><input type="date" class="form-input" id="pf-start"></div>
+      <div class="form-group"><label class="form-label">תאריך סיום יעד</label><input type="date" class="form-input" id="pf-end"></div>
+    </div>
     <div class="form-group"><label class="form-label">צבע</label>
       <div class="color-opts" id="color-opts">
         <div class="color-opt selected" data-color="#6c5ce7" style="background:#6c5ce7"></div>
@@ -570,6 +597,7 @@ var viewMeta={
   done:    {title:'🎉 הושלמו',        capture:false,toolbar:true},
   projects:{title:'📁 פרויקטים',      capture:false,toolbar:false},
   review:  {title:'🔄 סקירה שבועית',  capture:false,toolbar:false},
+  stats:   {title:'📊 סטטיסטיקות',     capture:false,toolbar:false},
 };
 
 // ===== VIEW =====
@@ -778,6 +806,7 @@ function render(){
 
   if(currentView==='projects'){chips.style.display='none';wrap.innerHTML='';wrap.appendChild(buildProjectsGrid());return}
   if(currentView==='review'){chips.style.display='none';wrap.innerHTML='';wrap.appendChild(buildReview());return}
+  if(currentView==='stats'){chips.style.display='none';wrap.innerHTML='';wrap.appendChild(buildStats());return}
 
   var list=getList();
 
@@ -991,10 +1020,21 @@ function buildProjectsGrid(){
     var done=tasks.filter(function(t){return t.projectId===p.id&&t.done}).length;
     var pct=total?Math.round(done/total*100):0;
     var card=document.createElement('div');card.className='proj-card';
+    var today=new Date().toISOString().split('T')[0];
+    var endOver=p.endDate&&p.endDate<today;
+    var endSoon=p.endDate&&!endOver&&p.endDate<=addDays(today,7);
+    var dateInfo='';
+    if(p.startDate||p.endDate){
+      dateInfo='<div class="proj-dates">';
+      if(p.startDate)dateInfo+='<span class="proj-date-tag">▶ '+fmtDate(p.startDate)+'</span>';
+      if(p.endDate)dateInfo+='<span class="proj-date-tag'+(endOver?' proj-date-over':endSoon?' proj-date-soon':'')+'">⏹ '+fmtDate(p.endDate)+(endOver?' ⚠️':endSoon?' 🔔':'')+'</span>';
+      dateInfo+='</div>';
+    }
     card.innerHTML='<div class="proj-card-stripe" style="background:'+p.color+'"></div>'
       +'<div class="proj-card-name">'+esc(p.name)+'</div>'
-      +(p.desc?'<div class="proj-card-desc">'+esc(p.desc)+'</div>':'<div style="margin-bottom:10px"></div>')
-      +'<div class="proj-progress-bar"><div class="proj-progress-fill" style="width:'+pct+'%;background:'+p.color+'"></div></div>'
+      +(p.desc?'<div class="proj-card-desc">'+esc(p.desc)+'</div>':'')
+      +dateInfo
+      +'<div class="proj-progress-bar" style="margin-top:10px"><div class="proj-progress-fill" style="width:'+pct+'%;background:'+p.color+'"></div></div>'
       +'<div class="proj-progress-labels"><span>'+done+' / '+total+' משימות</span><span>'+pct+'%</span></div>'
       +'<button type="button" class="proj-del-btn" data-pid="'+p.id+'" style="margin-top:12px;background:none;border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:8px;font-size:12px;font-family:Heebo,sans-serif;cursor:pointer;width:100%;transition:all 0.15s">🗑️ מחק פרויקט</button>';
     card.addEventListener('click',function(e){
@@ -1021,6 +1061,100 @@ function renderSidebarProjects(){
     item.addEventListener('click',function(e){e.stopPropagation();setView('next',p.id)});
     el.appendChild(item);
   });
+}
+
+
+// ===== STATISTICS =====
+function buildStats(){
+  var wrap=document.createElement('div');wrap.className='stats-wrap';
+  var today=new Date().toISOString().split('T')[0];
+
+  // daily counts
+  var doneToday=tasks.filter(function(t){return t.done&&t.doneAt&&new Date(t.doneAt).toISOString().split('T')[0]===today}).length;
+  var createdToday=tasks.filter(function(t){return t.created&&new Date(t.created).toISOString().split('T')[0]===today}).length;
+  var openTotal=tasks.filter(function(t){return !t.done}).length;
+  var overdueCount=tasks.filter(function(t){return !t.done&&t.due&&t.due<today}).length;
+
+  // kpi cards
+  var kpis=[
+    {label:'הושלמו היום',val:doneToday,color:'var(--green)',icon:'✅'},
+    {label:'נוצרו היום',val:createdToday,color:'var(--blue)',icon:'✨'},
+    {label:'משימות פתוחות',val:openTotal,color:'var(--accent)',icon:'📋'},
+    {label:'באיחור',val:overdueCount,color:overdueCount?'var(--red)':'var(--text-muted)',icon:'⚠️'},
+  ];
+  var kpiRow=document.createElement('div');kpiRow.className='stats-kpi-row';
+  kpis.forEach(function(k){
+    var card=document.createElement('div');card.className='stats-kpi';
+    card.innerHTML='<div class="stats-kpi-icon">'+k.icon+'</div>'
+      +'<div class="stats-kpi-val" style="color:'+k.color+'">'+k.val+'</div>'
+      +'<div class="stats-kpi-label">'+k.label+'</div>';
+    kpiRow.appendChild(card);
+  });
+  wrap.appendChild(kpiRow);
+
+  // weekly bar chart (last 7 days)
+  var h2=document.createElement('div');h2.className='stats-section-title';h2.textContent='השלמות — 7 ימים אחרונים';
+  wrap.appendChild(h2);
+  var chartWrap=document.createElement('div');chartWrap.className='stats-chart';
+  var days=[];
+  for(var i=6;i>=0;i--){
+    var d=new Date();d.setDate(d.getDate()-i);
+    days.push(d.toISOString().split('T')[0]);
+  }
+  var maxVal=1;
+  var dayCounts=days.map(function(day){
+    var cnt=tasks.filter(function(t){return t.done&&t.doneAt&&new Date(t.doneAt).toISOString().split('T')[0]===day}).length;
+    if(cnt>maxVal)maxVal=cnt;
+    return cnt;
+  });
+  var dayNames=['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+  days.forEach(function(day,i){
+    var cnt=dayCounts[i];
+    var pct=Math.round(cnt/maxVal*100);
+    var isToday=day===today;
+    var col=document.createElement('div');col.className='stats-bar-col';
+    col.innerHTML='<div class="stats-bar-val">'+cnt+'</div>'
+      +'<div class="stats-bar-wrap"><div class="stats-bar-fill'+(isToday?' today':'')+'" style="height:'+pct+'%"></div></div>'
+      +'<div class="stats-bar-label'+(isToday?' today':'')+'">'+dayNames[new Date(day).getDay()]+'</div>';
+    chartWrap.appendChild(col);
+  });
+  wrap.appendChild(chartWrap);
+
+  // by project
+  if(projects.length){
+    var h3=document.createElement('div');h3.className='stats-section-title';h3.textContent='לפי פרויקט';
+    wrap.appendChild(h3);
+    var projList=document.createElement('div');projList.className='stats-proj-list';
+    projects.forEach(function(p){
+      var total=tasks.filter(function(t){return t.projectId===p.id}).length;
+      var done=tasks.filter(function(t){return t.projectId===p.id&&t.done}).length;
+      if(!total)return;
+      var pct=Math.round(done/total*100);
+      var row=document.createElement('div');row.className='stats-proj-row';
+      row.innerHTML='<div class="stats-proj-dot" style="background:'+p.color+'"></div>'
+        +'<div class="stats-proj-name">'+esc(p.name)+'</div>'
+        +'<div class="stats-proj-bar-wrap"><div class="stats-proj-bar-fill" style="width:'+pct+'%;background:'+p.color+'"></div></div>'
+        +'<div class="stats-proj-pct">'+pct+'%</div>';
+      projList.appendChild(row);
+    });
+    wrap.appendChild(projList);
+  }
+
+  // status breakdown
+  var h4=document.createElement('div');h4.className='stats-section-title';h4.textContent='פירוט לפי סטטוס';
+  wrap.appendChild(h4);
+  var statusList=document.createElement('div');statusList.className='stats-proj-list';
+  [['inbox','📥','לעיבוד'],['next','✅','פעולות הבאות'],['waiting','⏳','ממתין לאחרים'],['someday','💭','יום אחד']].forEach(function(s){
+    var cnt=tasks.filter(function(t){return !t.done&&t.status===s[0]}).length;
+    var row=document.createElement('div');row.className='stats-proj-row';
+    row.innerHTML='<div style="font-size:16px;width:20px;flex-shrink:0">'+s[1]+'</div>'
+      +'<div class="stats-proj-name">'+s[2]+'</div>'
+      +'<div class="stats-proj-pct" style="min-width:30px">'+cnt+'</div>';
+    statusList.appendChild(row);
+  });
+  wrap.appendChild(statusList);
+
+  return wrap;
 }
 
 // ===== REVIEW =====
@@ -1205,6 +1339,7 @@ document.getElementById('task-modal').addEventListener('click',function(e){if(e.
 function openProjModal(){
   closeSidebar();projColor='#6c5ce7';
   document.getElementById('pf-name').value='';document.getElementById('pf-desc').value='';
+  document.getElementById('pf-start').value='';document.getElementById('pf-end').value='';
   document.getElementById('pf-name').style.borderColor='';
   document.querySelectorAll('.color-opt').forEach(function(el){el.classList.toggle('selected',el.getAttribute('data-color')===projColor)});
   document.getElementById('proj-modal').classList.add('open');
@@ -1215,7 +1350,9 @@ function saveProject(){
   var name=document.getElementById('pf-name').value.trim();
   if(!name){document.getElementById('pf-name').style.borderColor='#d63031';return}
   document.getElementById('pf-name').style.borderColor='';
-  projects.push({id:uid(),name:name,desc:document.getElementById('pf-desc').value.trim(),color:projColor});
+  projects.push({id:uid(),name:name,desc:document.getElementById('pf-desc').value.trim(),color:projColor,
+    startDate:document.getElementById('pf-start').value||'',
+    endDate:document.getElementById('pf-end').value||''});
   save();render();closeProjModal();showToast('פרויקט נוצר ✓');
 }
 document.getElementById('add-proj-btn').addEventListener('click',openProjModal);
@@ -1248,6 +1385,7 @@ function showToast(msg){
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function makeEl(tag,cls,text){var el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el}
 function makeTag(text,bg,color){var el=makeEl('span','tag');el.textContent=text;el.style.background=bg;el.style.color=color;return el}
+function addDays(dateStr,n){var d=new Date(dateStr);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0]}
 function fmtDate(str){
   if(!str)return'';var d=new Date(str+'T00:00:00');var now=new Date();now.setHours(0,0,0,0);
   var diff=Math.round((d-now)/86400000);
@@ -1533,11 +1671,6 @@ if(gistToken){
 }
 render();
 })();
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/gtd-ap/sw.js');
-}
 </script>
 </body>
 </html>
