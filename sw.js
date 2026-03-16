@@ -1,10 +1,10 @@
-const CACHE_NAME = 'gtd-v2';
+const CACHE_NAME = 'gtd-v3';
 const ASSETS = [
-  '/GTD/',
-  '/GTD/index.html',
-  '/GTD/manifest.json',
-  '/GTD/icon-192.png',
-  '/GTD/icon-512.png'
+  '/gtd-ap/',
+  '/gtd-ap/index.html',
+  '/gtd-ap/manifest.json',
+  '/gtd-ap/icon-192.png',
+  '/gtd-ap/icon-512.png'
 ];
 
 self.addEventListener('install', function(e) {
