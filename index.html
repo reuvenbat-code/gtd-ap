@@ -334,7 +334,7 @@ html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:
   <div class="body">
     <nav class="sidebar" id="sidebar">
       <div class="nav-section">
-        <div class="nav-item active" data-view="inbox">
+        <div class="nav-item" data-view="inbox">
           <span class="nav-icon">📥</span><span>לעיבוד</span>
           <span class="nav-count" id="c-inbox">0</span>
         </div>
@@ -387,9 +387,9 @@ html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:
 
   <nav class="bottom-nav">
     <div class="bottom-nav-inner">
-      <button class="bnav-item active" data-view="inbox"><span class="bnav-icon">📥</span><span>לעיבוד</span><span class="bnav-count" id="b-inbox"></span></button>
+      <button class="bnav-item" data-view="inbox"><span class="bnav-icon">📥</span><span>לעיבוד</span><span class="bnav-count" id="b-inbox"></span></button>
       <button class="bnav-item" data-view="next"><span class="bnav-icon">✅</span><span>הבאות</span><span class="bnav-count" id="b-next"></span></button>
-      <button class="bnav-item" data-view="today"><span class="bnav-icon">📅</span><span>היום</span><span class="bnav-count" id="b-today"></span></button>
+      <button class="bnav-item active" data-view="today"><span class="bnav-icon">📅</span><span>היום</span><span class="bnav-count" id="b-today"></span></button>
       <button class="bnav-item" data-view="projects"><span class="bnav-icon">📁</span><span>פרויקטים</span></button>
       <button class="bnav-item" data-view="stats"><span class="bnav-icon">📊</span><span>סטטיסטיקות</span></button>
     </div>
@@ -579,7 +579,7 @@ html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:
 (function(){
 'use strict';
 
-var tasks=[], projects=[], currentView='inbox', ctxFilter='', editingId=null, projColor='#6c5ce7', reviewState={};
+var tasks=[], projects=[], currentView='today', ctxFilter='', editingId=null, projColor='#6c5ce7', reviewState={};
 var currentSort='priority', filterPrio='', filterProj='', currentProjId=null;
 
 function load(){
@@ -864,9 +864,10 @@ function getList(){
   switch(currentView){
     case 'inbox':  return tasks.filter(function(t){return t.status==='inbox'&&!t.done});
     case 'next':   return tasks.filter(function(t){return t.status==='next'&&!t.done});
-    case 'waiting':return tasks.filter(function(t){return t.status==='waiting'&&!t.done});
+    case 'waiting':var wd=new Date().toISOString().split('T')[0];return tasks.filter(function(t){return t.status==='waiting'&&!t.done&&(!t.due||t.due>wd)});
     case 'someday':return tasks.filter(function(t){return t.status==='someday'&&!t.done});
-    case 'today':  return tasks.filter(function(t){return t.isToday&&!t.done});
+    case 'today':  var tod=new Date().toISOString().split('T')[0];
+      return tasks.filter(function(t){return !t.done&&(t.isToday||(t.due&&t.due<=tod))});
     case 'done':   return tasks.filter(function(t){return t.done});
     default:return[];
   }
@@ -1045,10 +1046,16 @@ function buildProjectsGrid(){
       +dateInfo
       +'<div class="proj-progress-bar" style="margin-top:10px"><div class="proj-progress-fill" style="width:'+pct+'%;background:'+p.color+'"></div></div>'
       +'<div class="proj-progress-labels"><span>'+done+' / '+total+' משימות</span><span>'+pct+'%</span></div>'
-      +'<button type="button" class="proj-del-btn" data-pid="'+p.id+'" style="margin-top:12px;background:none;border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:8px;font-size:12px;font-family:Heebo,sans-serif;cursor:pointer;width:100%;transition:all 0.15s">🗑️ מחק פרויקט</button>';
+      +'<div style="display:flex;gap:6px;margin-top:12px">'
+      +'<button type="button" class="proj-edit-btn" data-pid="'+p.id+'" style="flex:1;background:none;border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:8px;font-size:12px;font-family:Heebo,sans-serif;cursor:pointer;transition:all 0.15s">✏️ עריכה</button>'
+      +'<button type="button" class="proj-del-btn" data-pid="'+p.id+'" style="flex:1;background:none;border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:8px;font-size:12px;font-family:Heebo,sans-serif;cursor:pointer;transition:all 0.15s">🗑️ מחק</button>'
+      +'</div>';
     card.addEventListener('click',function(e){
       if(e.target.closest('.proj-del-btn')){
         deleteProject(e.target.closest('.proj-del-btn').getAttribute('data-pid'));return;
+      }
+      if(e.target.closest('.proj-edit-btn')){
+        openProjModal(e.target.closest('.proj-edit-btn').getAttribute('data-pid'));return;
       }
       setView('next',p.id);
     });
@@ -1335,7 +1342,14 @@ function saveTask(){
   var title=document.getElementById('f-title').value.trim();
   if(!title){document.getElementById('f-title').style.borderColor='#d63031';document.getElementById('f-title').focus();return}
   document.getElementById('f-title').style.borderColor='';
-  var data={title:title,notes:document.getElementById('f-notes').value.trim(),status:document.getElementById('f-status').value,
+  var chosenStatus=document.getElementById('f-status').value;
+  var chosenDue=document.getElementById('f-due').value;
+  var todayStr=new Date().toISOString().split('T')[0];
+  // auto-move to waiting if future due date and not already waiting/someday
+  if(chosenDue&&chosenDue>todayStr&&chosenStatus==='next'){chosenStatus='waiting';}
+  // auto-move from waiting to today if due date arrived
+  if(chosenDue&&chosenDue<=todayStr&&chosenStatus==='waiting'){chosenStatus='next';}
+  var data={title:title,notes:document.getElementById('f-notes').value.trim(),status:chosenStatus,
     priority:parseInt(document.getElementById('f-priority').value),context:document.getElementById('f-context').value,
     projectId:document.getElementById('f-project').value,due:document.getElementById('f-due').value,
     duration:document.getElementById('f-duration').value,isToday:document.getElementById('f-today').checked};
@@ -1368,24 +1382,46 @@ document.getElementById('task-save-btn').addEventListener('click',saveTask);
 document.getElementById('task-modal').addEventListener('click',function(e){if(e.target===this)closeTaskModal()});
 
 // ===== PROJECT MODAL =====
-function openProjModal(){
-  closeSidebar();projColor='#6c5ce7';
-  document.getElementById('pf-name').value='';document.getElementById('pf-desc').value='';
-  document.getElementById('pf-start').value='';document.getElementById('pf-end').value='';
+var editingProjId=null;
+function openProjModal(id){
+  closeSidebar();
+  editingProjId=id||null;
+  var p=id?projects.find(function(p){return p.id===id}):null;
+  projColor=p?p.color:'#6c5ce7';
+  document.getElementById('pf-name').value=p?p.name:'';
+  document.getElementById('pf-desc').value=p?p.desc:'';
+  document.getElementById('pf-start').value=p?p.startDate||'':'';
+  document.getElementById('pf-end').value=p?p.endDate||'':'';
   document.getElementById('pf-name').style.borderColor='';
+  document.getElementById('proj-modal').querySelector('.modal-title').textContent=p?'עריכת פרויקט':'פרויקט חדש';
+  document.getElementById('proj-save-btn').textContent=p?'שמור שינויים':'צור פרויקט';
   document.querySelectorAll('.color-opt').forEach(function(el){el.classList.toggle('selected',el.getAttribute('data-color')===projColor)});
   document.getElementById('proj-modal').classList.add('open');
-  setTimeout(function(){document.getElementById('pf-name').focus()},250);
+  if(!id&&!/Mobi|Android/i.test(navigator.userAgent)){
+    setTimeout(function(){document.getElementById('pf-name').focus()},250);
+  }
 }
 function closeProjModal(){document.getElementById('proj-modal').classList.remove('open')}
 function saveProject(){
   var name=document.getElementById('pf-name').value.trim();
   if(!name){document.getElementById('pf-name').style.borderColor='#d63031';return}
   document.getElementById('pf-name').style.borderColor='';
-  projects.push({id:uid(),name:name,desc:document.getElementById('pf-desc').value.trim(),color:projColor,
-    startDate:document.getElementById('pf-start').value||'',
-    endDate:document.getElementById('pf-end').value||''});
-  save();render();closeProjModal();showToast('פרויקט נוצר ✓');
+  if(editingProjId){
+    var p=projects.find(function(p){return p.id===editingProjId});
+    if(p){
+      p.name=name;
+      p.desc=document.getElementById('pf-desc').value.trim();
+      p.color=projColor;
+      p.startDate=document.getElementById('pf-start').value||'';
+      p.endDate=document.getElementById('pf-end').value||'';
+    }
+    save();render();closeProjModal();showToast('פרויקט עודכן ✓');
+  } else {
+    projects.push({id:uid(),name:name,desc:document.getElementById('pf-desc').value.trim(),color:projColor,
+      startDate:document.getElementById('pf-start').value||'',
+      endDate:document.getElementById('pf-end').value||''});
+    save();render();closeProjModal();showToast('פרויקט נוצר ✓');
+  }
 }
 document.getElementById('add-proj-btn').addEventListener('click',openProjModal);
 document.getElementById('proj-cancel-btn').addEventListener('click',closeProjModal);
